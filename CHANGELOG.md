@@ -1,5 +1,16 @@
 ### 6.3.12
 
+- Fixes SVG point symbols of vector and vector tile layers rendering as solid black rectangles in
+  Chromium based browsers. Chromium rasterizes SVG image elements lazily and its WebGL upload path -
+  unlike the 2D canvas path - needs an already decoded bitmap; without one `texSubImage2D` fails with
+  `INVALID_VALUE` instead of throwing. Cesium does not check `getError`, so the upload silently wrote
+  nothing while the texture atlas kept the image index and the cached promise, leaving that atlas
+  region empty for good. Image elements are now rasterized into a canvas before being handed to a
+  billboard, and rasterization is retried on the next frame rather than falling back to the image.
+- Images handed to cesium billboards are now tagged with a stable id, so the texture atlas adds each
+  image once instead of once per feature. Previously still loading icons (passed on as a promise) and
+  canvas backed image styles (regular shapes, colored icons) provided neither a `src` nor an `id`, so
+  cesium fell back to a fresh GUID per billboard.
 - Fixes billboards, labels and clamped primitives of vector, vector tile and clustered layers being
   placed kilometers below the surface, where they no longer track the terrain and - being rendered
   without a depth test - appear to float through the scene. Ground relative height references are
