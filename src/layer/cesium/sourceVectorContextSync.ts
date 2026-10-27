@@ -110,6 +110,14 @@ export function createSourceVectorContextSync(
     addFeatures(source.getFeatures());
   };
 
+  // Features converted before a terrain provider was set keep their ground relative height
+  // references, which can never be resolved against the terrain provider afterwards. A layer whose
+  // features are converted once - a GeoJSON layer for instance - would never recover from that.
+  const removeTerrainChangedListener =
+    scene.terrainProviderChanged?.addEventListener(() => {
+      refresh();
+    });
+
   const olListeners = [
     source.on('addfeature', (event) => {
       addFeature(event.feature as Feature).catch(() => {
@@ -152,6 +160,7 @@ export function createSourceVectorContextSync(
     },
     refresh,
     destroy(): void {
+      removeTerrainChangedListener?.();
       unByKey(olListeners);
       vectorPropertiesChanged.forEach((removeListener) => {
         removeListener();

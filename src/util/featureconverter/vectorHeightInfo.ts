@@ -98,6 +98,21 @@ export function isAbsoluteHeightReference(
   return heightReference === HeightReference.NONE;
 }
 
+/**
+ * Whether the height reference is resolved against the terrain, as opposed to 3D tiles. Only those
+ * can be resolved by sampling the terrain provider.
+ */
+export function isTerrainHeightReference(
+  heightReference: HeightReference,
+): boolean {
+  return (
+    heightReference === HeightReference.CLAMP_TO_GROUND ||
+    heightReference === HeightReference.CLAMP_TO_TERRAIN ||
+    heightReference === HeightReference.RELATIVE_TO_GROUND ||
+    heightReference === HeightReference.RELATIVE_TO_TERRAIN
+  );
+}
+
 export function getRelativeEquivalent(
   clampedHeightReference: ClampedHeightReference,
 ): RelativeHeightReference {

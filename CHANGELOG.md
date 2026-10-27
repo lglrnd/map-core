@@ -4,6 +4,13 @@
 
 ### 6.3.12
 
+- Fixes billboards, labels and clamped primitives of vector, vector tile and clustered layers being
+  placed kilometers below the surface, where they no longer track the terrain and - being rendered
+  without a depth test - appear to float through the scene. Ground relative height references are
+  now resolved by sampling the terrain provider instead of `Scene.getHeight`, which only covers the
+  currently rendered tiles.
+- Features converted before a terrain provider was set are re-converted once a terrain becomes
+  available, so layers which are only converted once no longer keep unresolved heights.
 - Allows overwriting the content-type for WFS Requests. Also changed the default content-type to text/xml
 - Added horizontal panorama image flipping based on PANORAMA_FLIP meta tag.
 - Fixes an issue, where the panorama highlighting would not work for images without

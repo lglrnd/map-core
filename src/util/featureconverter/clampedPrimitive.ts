@@ -11,6 +11,8 @@ import {
   Matrix4,
 } from '@vcmap-cesium/engine';
 import { mercatorToCartographic } from '../math.js';
+import { getTerrainHeightSampler } from '../../layer/cesium/terrainHeightSampler.js';
+import { isTerrainHeightReference } from './vectorHeightInfo.js';
 
 const scratchUpdateHeightCartesian = new Cartesian3();
 
@@ -105,14 +107,41 @@ export function setupClampedPrimitive(
     heightReference,
   );
 
-  const height = scene.getHeight(originCartographic, heightReference);
-  if (height) {
+  let destroyed = false;
+
+  const applyHeight = (height: number): void => {
+    if (destroyed) {
+      return;
+    }
     const updatedHeightCarto = originCartographic.clone();
     updatedHeightCarto.height = height;
     callback(updatedHeightCarto);
+  };
+
+  // `Scene.getHeight` derives the height from the globes currently rendered meshes. Outside the
+  // rendered tile set it falls back to a coarse ancestor tile, where the interpolated height is
+  // meaningless and usually kilometers below the ellipsoid. Sample the terrain provider instead,
+  // which is view independent. The `updateHeight` callback above still refines the height once the
+  // actual tile is rendered.
+  const sampler = getTerrainHeightSampler(scene);
+  if (sampler.hasTerrain && isTerrainHeightReference(heightReference)) {
+    sampler
+      .sample(originCartographic)
+      .then((height) => {
+        if (height != null) {
+          applyHeight(height);
+        }
+      })
+      .catch(() => {});
+  } else {
+    const height = scene.getHeight(originCartographic, heightReference);
+    if (height != null) {
+      applyHeight(height);
+    }
   }
 
   primitive.destroy = (): void => {
+    destroyed = true;
     callbackHandler();
     destroy();
   };
