@@ -1,7 +1,6 @@
 import type {
   Billboard,
   Entity,
-  HeightReference,
   Label,
   PointPrimitive,
   VerticalOrigin,
@@ -9,6 +8,7 @@ import type {
 import {
   Cartographic,
   CustomDataSource,
+  HeightReference,
   Math as CesiumMath,
 } from '@vcmap-cesium/engine';
 import Feature from 'ol/Feature.js';
@@ -19,6 +19,7 @@ import Projection from '../util/projection.js';
 import type CesiumMap from '../map/cesiumMap.js';
 import type { VectorClusterGroupImplementationOptions } from './vectorClusterGroup.js';
 import VectorClusterCesiumContext from './vectorClusterCesiumContext.js';
+import { getTerrainHeightSampler } from '../layer/cesium/terrainHeightSampler.js';
 import type { SourceVectorContextSync } from '../layer/cesium/sourceVectorContextSync.js';
 import { createSourceVectorContextSync } from '../layer/cesium/sourceVectorContextSync.js';
 import VectorClusterGroupImpl from './vectorClusterGroupImpl.js';
@@ -103,8 +104,15 @@ export default class VectorClusterGroupCesiumImpl extends VectorClusterGroupImpl
     if (bbOptions) {
       cluster.billboard.image = bbOptions.image as string;
       cluster.billboard.scale = bbOptions.scale as number;
-      cluster.billboard.heightReference =
-        bbOptions.heightReference as HeightReference;
+      // Cesium positions a cluster billboard at the average of its members positions. Since those
+      // already carry sampled terrain heights, the average is at a sensible height and must not be
+      // clamped again - clamping would resolve against the rendered meshes and push the billboard
+      // kilometers below the surface for everything outside the rendered tile set.
+      cluster.billboard.heightReference = getTerrainHeightSampler(
+        this.map.getScene()!,
+      ).hasTerrain
+        ? HeightReference.NONE
+        : (bbOptions.heightReference as HeightReference);
       cluster.billboard.verticalOrigin =
         bbOptions.verticalOrigin as VerticalOrigin;
       if (bbOptions.eyeOffset) {

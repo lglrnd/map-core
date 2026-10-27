@@ -32,6 +32,7 @@ import {
 } from '../vectorSymbols.js';
 import type PanoramaMap from '../../map/panoramaMap.js';
 import { getResolution } from '../../map/baseCesiumMap.js';
+import { resolveTerrainHeights } from './terrainHeightSampler.js';
 
 export function setReferenceForPicking(
   feature: Feature,
@@ -341,6 +342,8 @@ export default class VectorContext implements CesiumVectorContext {
       vectorProperties,
       scene,
     );
+
+    await resolveTerrainHeights(scene, convertedItems);
 
     if (replaced) {
       convertedItems.forEach((item) => {

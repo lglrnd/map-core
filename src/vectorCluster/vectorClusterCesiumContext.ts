@@ -11,6 +11,7 @@ import { setReferenceForPicking } from '../layer/cesium/vectorContext.js';
 import type VectorProperties from '../layer/vectorProperties.js';
 import type { ConvertedItem } from '../util/featureconverter/convert.js';
 import convert from '../util/featureconverter/convert.js';
+import { resolveTerrainHeights } from '../layer/cesium/terrainHeightSampler.js';
 
 class VectorClusterCesiumContext implements CesiumVectorContext {
   entities: EntityCollection;
@@ -72,6 +73,8 @@ class VectorClusterCesiumContext implements CesiumVectorContext {
       vectorProperties,
       scene,
     );
+
+    await resolveTerrainHeights(scene, convertedItems);
 
     this._featureItems.get(feature)?.();
 

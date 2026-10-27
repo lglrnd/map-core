@@ -45,6 +45,7 @@ import type LayerCollection from '../util/layerCollection.js';
 import VcsEvent from '../vcsEvent.js';
 import type { DisableMapControlOptions } from '../util/mapCollection.js';
 import { vectorClusterGroupName } from '../vectorCluster/vectorClusterSymbols.js';
+import { destroyTerrainHeightSampler } from '../layer/cesium/terrainHeightSampler.js';
 
 /**
  * @param  dataSourceCollection
@@ -908,6 +909,10 @@ class CesiumMap extends BaseCesiumMap {
   }
 
   destroy(): void {
+    const scene = this.getScene();
+    if (scene) {
+      destroyTerrainHeightSampler(scene);
+    }
     if (this.dataSourceDisplay && !this.dataSourceDisplay.isDestroyed()) {
       this.dataSourceDisplay.destroy();
     }
